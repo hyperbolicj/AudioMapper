@@ -1,12 +1,13 @@
 package AudioMapperApp.Logger;
 
-import java.io.FileWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import AudioMapperApp.TextFileHandler.TextFileWritter;
+
 public class Logger 
 {
-	private static FileWriter FStream;
+	private static final TextFileWritter Writer = new TextFileWritter();
 	private static SimpleDateFormat Formatter = new SimpleDateFormat("dd_MM_yyyy_HH_mm_ss");
 	private static Date D = new Date();  
 	private static String FilePath;
@@ -23,8 +24,7 @@ public class Logger
 		FilePath = "Log_" + Formatter.format(D) + ".txt";
 		try 
 		{
-			FStream = new FileWriter(FilePath, false);
-			FStream.close();
+			Writer.ClearFile(FilePath);
 		} 
 		catch (Exception Exc) 
 		{
@@ -45,9 +45,9 @@ public class Logger
 		{
 			try 
 			{
-				FStream = new FileWriter(FilePath, true);
-				FStream.write(Formatter.format(D) + ": " + message + '\n');
-				FStream.close();
+				Writer.OpenFile(FilePath, true);
+				Writer.WriteLine(Formatter.format(D) + ": " + message + '\n');
+				Writer.CloseFile();
 			} 
 			catch (Exception Exc) 
 			{

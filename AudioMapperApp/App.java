@@ -19,6 +19,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import AudioMapperApp.AudioFileHandler.AudioFileHandler;
 import AudioMapperApp.Logger.Logger;
+import AudioMapperApp.TextFileHandler.TextFileReader;
 
 public class App extends JFrame implements ActionListener, WindowListener
 {
@@ -50,11 +51,15 @@ public class App extends JFrame implements ActionListener, WindowListener
 	//worker variables
 	private int i;
 	private int returnVal;
+	private int count;
 	private Boolean test;
 	private String[] params; 
 	private Process Proc;
-	private AudioFileHandler PlayerHandler;
+	private AudioFileHandler PlayerAudioHandler;
+	private TextFileReader PlayerTextHandler;
 	private Boolean PlayerAudioLoaded;
+	private char text;
+	private String TextFinal;
 	
 	public App()
 	{
@@ -81,6 +86,7 @@ public class App extends JFrame implements ActionListener, WindowListener
 		PlayerPlay = new JButton("Play");
 		PlayerStop = new JButton("Stop");
 		PlayerSeek = new JButton("Seek");
+		PlayerTextHandler = new TextFileReader();
 		//Setup static components that will always be displayed
 		i1 = new JMenuItem("View Player");
 		i1.addActionListener(this);
@@ -364,6 +370,7 @@ public class App extends JFrame implements ActionListener, WindowListener
 			}
 			else if(TrainerExec == e.getSource())
 			{
+				//NOTE: update path to the trainer application
 				params[0] = "";
 				params[1] = "0";
 				//get output filepath
@@ -397,7 +404,22 @@ public class App extends JFrame implements ActionListener, WindowListener
 		        if (returnVal == JFileChooser.APPROVE_OPTION)
 		        {
 		        	FileIn = FC.getSelectedFile();
-		        	//NOTE: Add text to player center window
+		        	PlayerTextHandler.OpenFile(FileIn.getAbsolutePath());
+		        	TextFinal = "";
+		        	while(false == PlayerTextHandler.EOF())
+		        	{
+		        		i = PlayerTextHandler.Read();
+		        		if(-1 != i)
+		        		{
+		        			text = (char)i;
+		        			if('\n' != text)
+		        			{
+		        				TextFinal += text;
+		        			}
+		        		}
+		        	}
+		        	PlayerContext.setText(TextFinal);
+		        	PlayerTextHandler.CloseFile();
 		        }
 		        else
 		        {
@@ -410,7 +432,7 @@ public class App extends JFrame implements ActionListener, WindowListener
 		        if (returnVal == JFileChooser.APPROVE_OPTION)
 		        {
 		        	FileIn = FC.getSelectedFile();
-		        	PlayerHandler = new AudioFileHandler(FileIn.getAbsolutePath());
+		        	PlayerAudioHandler = new AudioFileHandler(FileIn.getAbsolutePath());
 		        	System.out.println(FileIn.getAbsolutePath() + " loaded");
 		        	PlayerAudioLoaded = true;
 		        }
@@ -439,12 +461,12 @@ public class App extends JFrame implements ActionListener, WindowListener
 					if(PlayerPlay.getText().equals("Play"))
 					{
 						PlayerPlay.setText("Pause");
-						PlayerHandler.Play();
+						PlayerAudioHandler.Play();
 					}
 					else
 					{
 						PlayerPlay.setText("Play");
-						PlayerHandler.Pause();
+						PlayerAudioHandler.Pause();
 					}
 				}
 			}
@@ -453,14 +475,32 @@ public class App extends JFrame implements ActionListener, WindowListener
 				if(true == PlayerAudioLoaded)
 				{
 					PlayerPlay.setText("Play");
-					PlayerHandler.Stop();
+					PlayerAudioHandler.Stop();
 				}
 			}
 			else if(PlayerSeek == e.getSource())
 			{
 				if(true == PlayerAudioLoaded)
 				{
-					//NOTE: Determine the word number and apply the model then seek the word
+					returnVal = PlayerContext.getSelectionStart();
+					count = 0;
+					TextFinal = PlayerContext.getText();
+					test = false;
+					for(i = 0; i < returnVal; i ++)
+					{
+						text = TextFinal.charAt(i);
+						if( (text >= 'a' && text <= 'z') || (text >= 'A' && text <= 'Z'))
+						{
+							test = true;
+						}
+						if(true == test && !((text >= 'a' && text <= 'z') || (text >= 'A' && text <= 'Z')))
+						{
+							test = false;
+							count++;
+						}
+					}
+					count++;
+					//NOTE: Apply model to seek word (count)
 				}
 			}
 			else
